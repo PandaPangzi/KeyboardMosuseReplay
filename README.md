@@ -20,6 +20,7 @@
 | **进度条** | 回放时实时显示事件进度 |
 | **运行日志** | 内置日志面板，stdout 自动重定向显示 |
 | **窗口尺寸预设** | 状态栏内置 3 档窗口尺寸，一键切换居中 |
+<img width="900" height="724" alt="KMReasy" src="https://github.com/user-attachments/assets/9820ae05-88fe-4ca6-b92b-ab100085e9d7" />
 
 ---
 
