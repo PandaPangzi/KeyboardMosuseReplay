@@ -1,0 +1,27 @@
+{
+  "name": "示例",
+  "created_at": "2026-05-26T22:36:43",
+  "duration_ms": 6607.0,
+  "screen_w": 3840,
+  "screen_h": 2160,
+  "record_mouse_move": false
+,
+  "events": [
+    {"type":"key_down","timestamp":0.0,"key":"a"},
+    {"type":"key_up","timestamp":98.0,"key":"a"},
+    {"type":"mouse_down","timestamp":766.0,"x":1729,"y":845,"button":"left"},
+    {"type":"mouse_up","timestamp":846.0,"x":1729,"y":845,"button":"left"},
+    {"type":"mouse_down","timestamp":3465.0,"x":1729,"y":845,"button":"left"},
+    {"type":"mouse_up","timestamp":3536.0,"x":1729,"y":845,"button":"left"},
+    {"type":"mouse_down","timestamp":3772.0,"x":1729,"y":845,"button":"left"},
+    {"type":"mouse_up","timestamp":3824.0,"x":1729,"y":845,"button":"left"},
+    {"type":"key_down","timestamp":4134.0,"key":"a"},
+    {"type":"key_up","timestamp":4238.0,"key":"a"},
+    {"type":"key_down","timestamp":4464.0,"key":"a"},
+    {"type":"key_up","timestamp":4572.0,"key":"a"},
+    {"type":"mouse_down","timestamp":6320.0,"x":1149,"y":420,"button":"left"},
+    {"type":"mouse_up","timestamp":6407.0,"x":1149,"y":420,"button":"left"},
+    {"type":"key_down","timestamp":6407.0,"key":"ctrl+s"},
+    {"type":"key_up","timestamp":6507.0,"key":"ctrl+s"}
+  ]
+}
