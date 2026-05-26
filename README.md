@@ -1,0 +1,2 @@
+# KeyboardMosuseReplay
+AI帮写的简单的记录鼠标键盘按键的脚本
