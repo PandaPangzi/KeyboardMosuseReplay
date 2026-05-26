@@ -62,7 +62,7 @@ class _LogStream(io.TextIOBase):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("KeyboardRecord — 键鼠录制与回放")
+        self.setWindowTitle("KMReasy — 键鼠录制与回放")
         self.setMinimumSize(760, 520)
 
         self._recorder = Recorder()

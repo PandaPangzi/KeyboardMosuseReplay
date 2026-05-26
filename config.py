@@ -3,9 +3,32 @@
 """
 
 import os
+import sys
 
-# 脚本存储目录（绝对路径，兼容打包后的运行环境）
-SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
+
+def _runtime_data_dir() -> str:
+    """返回可写的数据目录：开发模式用项目根目录，打包后优先 exe 同目录。"""
+    if getattr(sys, "frozen", False):
+        # 打包后优先放在 exe 同目录，便于携带与管理
+        exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+        base = exe_dir
+        # 若目录不可写（例如 Program Files），自动回退到 AppData
+        try:
+            test_dir = os.path.join(base, "scripts")
+            os.makedirs(test_dir, exist_ok=True)
+            test_file = os.path.join(test_dir, ".write_test")
+            with open(test_file, "w", encoding="utf-8") as f:
+                f.write("ok")
+            os.remove(test_file)
+        except Exception:
+            base = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "KMReasy")
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return base
+
+
+# 脚本存储目录（打包后写入 AppData，避免 onefile 临时目录不可写）
+SCRIPTS_DIR = os.path.join(_runtime_data_dir(), "scripts")
 
 # 热键：Shift+Alt+R 开始/停止录制，Shift+Alt+S 开始/停止回放
 # frozenset 多元素 = 组合键（所有键同时按住即触发）

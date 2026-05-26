@@ -1,4 +1,4 @@
-# KeyboardRecord — 键鼠录制与回放工具
+# KeyboardMosuseReplay — 键鼠录制与回放工具
 
 基于 Python + PyQt6 实现的桌面级键鼠录制/回放工具，支持脚本管理、手动编辑事件、多脚本选择与回放，适用于自动化测试、重复操作批量执行等场景。
 
@@ -114,7 +114,7 @@ python main.py
 ## 模块结构
 
 ```
-KeyboardRecord/
+KeyboardMosuseReplay/
 ├── main.py                     # 程序入口，启动 Qt 应用
 ├── config.py                   # 全局配置（热键、采样间隔、回放默认值、UI 尺寸）
 ├── settings.py                 # 用户偏好持久化（settings.json 读写）
