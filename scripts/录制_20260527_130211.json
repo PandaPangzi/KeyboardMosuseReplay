@@ -1,0 +1,25 @@
+{
+  "name": "录制_20260527_130211",
+  "created_at": "2026-05-27T13:02:11",
+  "duration_ms": 11888.64,
+  "screen_w": 3840,
+  "screen_h": 2160,
+  "record_mouse_move": false
+,
+  "events": [
+    {"type":"mouse_down","timestamp":1112.45,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_up","timestamp":1193.48,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_down","timestamp":1414.53,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_up","timestamp":1487.48,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_down","timestamp":1692.47,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_up","timestamp":1763.51,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_down","timestamp":2045.47,"x":1618,"y":848,"button":"left"},
+    {"type":"mouse_up","timestamp":2130.47,"x":1618,"y":848,"button":"left"},
+    {"type":"key_down","timestamp":5953.37,"key":"r","scan_code":82},
+    {"type":"key_up","timestamp":6027.36,"key":"r","scan_code":82},
+    {"type":"key_down","timestamp":6477.35,"key":"r","scan_code":82},
+    {"type":"key_up","timestamp":6587.6,"key":"r","scan_code":82},
+    {"type":"mouse_down","timestamp":11789.53,"x":1165,"y":437,"button":"left"},
+    {"type":"mouse_up","timestamp":11887.69,"x":1165,"y":437,"button":"left"}
+  ]
+}

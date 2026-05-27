@@ -83,6 +83,7 @@ class MainWindow(QMainWindow):
         self._countdown_remaining: int = 0
         self._countdown_action: str = ""       # 'record' | 'play'
         self._pending_play_script = None       # 等待倒计时结束后回放的脚本
+        self._playback_stopped_by_user = False
 
         # 加载上次窗口尺寸
         self._load_size_setting()
@@ -278,12 +279,9 @@ class MainWindow(QMainWindow):
             self._start_record()
 
     def _on_record_toggle_hotkey(self):
-        """热键触发录制切换（停止时从结果中修剪热键的非修饰键）。"""
+        """热键触发录制切换（热键事件已在录制层过滤）。"""
         if self._recorder.is_running:
-            # 找出组合键中的非修饰键（如 Shift+Alt+R 中的 "r"）
-            _mods = {"shift", "alt", "ctrl", "cmd"}
-            trim = next((k for k in config.RECORD_HOTKEY if k not in _mods), None)
-            self._stop_record(trim_key=trim)
+            self._stop_record(trim_key=None)
         else:
             self._start_record()
 
@@ -371,6 +369,7 @@ class MainWindow(QMainWindow):
         script = self._pending_play_script
         if not script:
             return
+        self._playback_stopped_by_user = False
         self._playback = Playback(
             script=script,
             speed_factor=self.playback_opts.speed,
@@ -385,12 +384,27 @@ class MainWindow(QMainWindow):
         self._set_state_playing()
 
     def _on_stop_play(self):
-        if self._playback:
-            self._playback.stop()
+        if not (self._playback and self._playback.is_running):
+            QMessageBox.information(self, "提示", "当前没有正在回放的脚本。")
+            return
+        res = QMessageBox.question(
+            self,
+            "停止回放",
+            "确定要停止当前回放吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if res != QMessageBox.StandardButton.Yes:
+            return
+        self._playback_stopped_by_user = True
+        self._playback.stop()
 
     def _on_playback_finished(self):
         self._set_state_idle()
-        self.lbl_status.setText("回放完成")
+        if self._playback_stopped_by_user:
+            self.lbl_status.setText("回放已停止")
+            QMessageBox.information(self, "提示", "已停止回放。")
+        else:
+            self.lbl_status.setText("回放完成")
 
     def _on_playback_progress(self, current: int, total: int):
         self.progress_bar.setValue(current)

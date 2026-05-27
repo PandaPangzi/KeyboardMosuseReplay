@@ -52,7 +52,7 @@ MOUSE_MOVE_INTERVAL_MS = 20
 
 # 默认回放参数
 DEFAULT_PLAYBACK_SPEED = 1.0     # 速度倍率
-DEFAULT_LOOP_COUNT = 1           # 循环次数，0 = 无限
+DEFAULT_LOOP_COUNT = 0           # 循环次数，0 = 无限
 DEFAULT_START_DELAY_SEC = 3      # 回放前等待秒数
 
 # UI 预设窗口尺寸 (label, width, height)

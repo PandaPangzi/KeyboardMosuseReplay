@@ -152,11 +152,13 @@ def _build_preview_html(script) -> str:
 # ------------------------------------------------------------------
 
 _EDIT_TYPES = [
+    "delay",
     "key_down", "key_up",
     "mouse_down", "mouse_up", "mouse_move",
     "mouse_scroll_up", "mouse_scroll_down",
 ]
 _EDIT_LABEL = {
+    "delay":             "插入间隔",
     "key_down":          "按键按下",
     "key_up":            "按键弹起",
     "mouse_down":        "鼠标按下",
@@ -272,6 +274,7 @@ class ScriptListPanel(QWidget):
 
         ed_btn_row = QHBoxLayout()
         self.btn_add_row    = QPushButton("+  添加行")
+        self.btn_add_delay  = QPushButton("+  插入间隔")
         self.btn_del_row    = QPushButton("-  删除行")
         self.btn_save_edit  = QPushButton("💾  保存")
         self.btn_cancel_edit = QPushButton("✖  取消")
@@ -282,6 +285,7 @@ class ScriptListPanel(QWidget):
             "background:#f44336;color:white;padding:4px 12px;"
         )
         ed_btn_row.addWidget(self.btn_add_row)
+        ed_btn_row.addWidget(self.btn_add_delay)
         ed_btn_row.addWidget(self.btn_del_row)
         ed_btn_row.addStretch()
         ed_btn_row.addWidget(self.btn_save_edit)
@@ -302,6 +306,7 @@ class ScriptListPanel(QWidget):
 
         self.btn_edit_script.clicked.connect(self._enter_edit_mode)
         self.btn_add_row.clicked.connect(self._add_blank_row)
+        self.btn_add_delay.clicked.connect(self._add_delay_row)
         self.btn_del_row.clicked.connect(self._del_edit_row)
         self.btn_save_edit.clicked.connect(self._save_edit)
         self.btn_cancel_edit.clicked.connect(self._cancel_edit)
@@ -548,7 +553,13 @@ class ScriptListPanel(QWidget):
     def _add_blank_row(self):
         from core.event_model import EventType
         dummy = Event(type=EventType.KEY_DOWN, timestamp=0)
-        self._insert_edit_row(dummy, "100")
+        self._insert_edit_row(dummy, "60")
+        self._renumber_edit_rows()
+
+    def _add_delay_row(self):
+        """插入纯间隔行（不产生事件，仅累加时间轴）。"""
+        dummy = Event(type="delay", timestamp=0)
+        self._insert_edit_row(dummy, "60")
         self._renumber_edit_rows()
 
     def _del_edit_row(self):
@@ -591,6 +602,10 @@ class ScriptListPanel(QWidget):
             interval_text = (self.edit_table.item(row, 5) or QTableWidgetItem("-")).text().strip()
             interval_ms = 0 if interval_text == "-" else max(0, _parse_int(interval_text, 0))
 
+            if etype == "delay":
+                ts += interval_ms
+                continue
+
             kw = {"type": etype, "timestamp": round(ts, 2)}
             if etype in ("key_down", "key_up"):
                 kw["key"] = name_val or "unknown"
@@ -615,7 +630,7 @@ class ScriptListPanel(QWidget):
     # 从手动面板添加事件（编辑模式回调）
     # ------------------------------------------------------------------
 
-    def _add_event_from_panel(self, ev: Event, interval_str: str = "100"):
+    def _add_event_from_panel(self, ev: Event, interval_str: str = "60"):
         """由 ManualMousePanel 调用，将事件追加到编辑表格末尾。"""
         if self._stack.currentIndex() != 1:
             return

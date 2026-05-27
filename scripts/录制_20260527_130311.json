@@ -1,0 +1,23 @@
+{
+  "name": "录制_20260527_130311",
+  "created_at": "2026-05-27T13:03:11",
+  "duration_ms": 6131.39,
+  "screen_w": 3840,
+  "screen_h": 2160,
+  "record_mouse_move": false
+,
+  "events": [
+    {"type":"key_down","timestamp":2029.04,"key":"ctrl"},
+    {"type":"key_down","timestamp":2131.1,"key":"s","scan_code":83},
+    {"type":"key_up","timestamp":2177.01,"key":"ctrl"},
+    {"type":"key_up","timestamp":2243.11,"key":"s","scan_code":83},
+    {"type":"key_down","timestamp":2805.03,"key":"ctrl"},
+    {"type":"key_down","timestamp":2915.16,"key":"s","scan_code":83},
+    {"type":"key_up","timestamp":2951.12,"key":"ctrl"},
+    {"type":"key_up","timestamp":3001.07,"key":"s","scan_code":83},
+    {"type":"key_down","timestamp":3403.1,"key":"ctrl"},
+    {"type":"key_down","timestamp":3515.11,"key":"s","scan_code":83},
+    {"type":"key_up","timestamp":3550.91,"key":"ctrl"},
+    {"type":"key_up","timestamp":3605.21,"key":"s","scan_code":83}
+  ]
+}

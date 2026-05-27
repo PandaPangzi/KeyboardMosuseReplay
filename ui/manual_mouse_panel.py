@@ -99,7 +99,7 @@ class ManualMousePanel(QGroupBox):
         layout = QVBoxLayout(self)
         layout.setSpacing(6)
 
-        tip = QLabel("✏ 编辑脚本时可用：点击按钮将向编辑表格末尾追加事件（间隔默认 100 ms）")
+        tip = QLabel("✏ 编辑脚本时可用：点击按钮将向编辑表格末尾追加事件（间隔默认 60 ms）")
         tip.setStyleSheet("color: gray; font-size: 11px;")
         tip.setWordWrap(True)
         layout.addWidget(tip)
@@ -123,6 +123,20 @@ class ManualMousePanel(QGroupBox):
         m_grid.addWidget(self.btn_mid_click,   1, 1)
         m_grid.addWidget(self.btn_record_move, 2, 0, 1, 2)
         layout.addLayout(m_grid)
+
+        # ── 插入间隔 ────────────────────────────────────────────────
+        delay_row = QHBoxLayout()
+        self.spin_gap_ms = QSpinBox()
+        self.spin_gap_ms.setRange(1, 60000)
+        self.spin_gap_ms.setValue(60)
+        self.spin_gap_ms.setFixedWidth(86)
+        self.btn_insert_gap = QPushButton("⏱ 插入间隔")
+        delay_row.addWidget(self.btn_insert_gap)
+        delay_row.addStretch()
+        delay_row.addWidget(QLabel("时长"))
+        delay_row.addWidget(self.spin_gap_ms)
+        delay_row.addWidget(QLabel("ms"))
+        layout.addLayout(delay_row)
 
         # ── 滚轮 ────────────────────────────────────────────────────
         scroll_row = QHBoxLayout()
@@ -157,26 +171,48 @@ class ManualMousePanel(QGroupBox):
         layout.addLayout(key_row)
 
         # ── 组合键 ──────────────────────────────────────────────────
-        combo_lbl = QLabel("组合键（最多三键，如 ctrl+s / ctrl+shift+z）：")
+        combo_lbl = QLabel("组合键（最多三键，空白框可留空）：")
         layout.addWidget(combo_lbl)
         combo_grid = QGridLayout()
         combo_grid.setSpacing(4)
         combo_grid.setColumnStretch(0, 1)
-        self._combo_inputs: list[QLineEdit] = []
+        self._combo_inputs: list[list[QLineEdit]] = []
         self._combo_btns: list[QPushButton] = []
         _defaults = ["ctrl+s", "ctrl+c", "ctrl+v", "ctrl+z", "ctrl+a"]
         _saved = settings.load().get("combo_keys", _defaults)
         for _i in range(5):
             _val = _saved[_i] if _i < len(_saved) else _defaults[_i]
-            _ed = QLineEdit(_val)
-            _ed.setPlaceholderText("如 ctrl+s")
-            _ed.editingFinished.connect(self._save_combos)
+            _parts = [p.strip() for p in str(_val).split("+") if p.strip()][:3]
+            while len(_parts) < 3:
+                _parts.append("")
+
+            _row = QHBoxLayout()
+            _row.setContentsMargins(0, 0, 0, 0)
+            _row.setSpacing(4)
+
+            _eds: list[QLineEdit] = []
+            for _idx in range(3):
+                _ed = QLineEdit(_parts[_idx])
+                _ed.setPlaceholderText(f"键{_idx + 1}")
+                _ed.setFixedWidth(90)
+                _ed.editingFinished.connect(self._save_combos)
+                _eds.append(_ed)
+                _row.addWidget(_ed)
+                if _idx < 2:
+                    _plus = QLabel("+")
+                    _plus.setStyleSheet("color: gray;")
+                    _plus.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    _plus.setFixedWidth(12)
+                    _row.addWidget(_plus)
+
             _btn = QPushButton("⌨ 执行")
             _btn.setFixedWidth(64)
             _btn.clicked.connect(lambda _, idx=_i: self._emit_combo(idx))
-            combo_grid.addWidget(_ed,  _i, 0)
+            _row_wrap = QWidget()
+            _row_wrap.setLayout(_row)
+            combo_grid.addWidget(_row_wrap, _i, 0)
             combo_grid.addWidget(_btn, _i, 1)
-            self._combo_inputs.append(_ed)
+            self._combo_inputs.append(_eds)
             self._combo_btns.append(_btn)
         layout.addLayout(combo_grid)
 
@@ -203,6 +239,7 @@ class ManualMousePanel(QGroupBox):
         )
         self.btn_key_click.clicked.connect(self._emit_key_click)
         self.btn_record_move.clicked.connect(self._start_move_capture)
+        self.btn_insert_gap.clicked.connect(self._emit_delay)
 
         self._cap_signals.phase_changed.connect(self._on_capture_phase)
         self._cap_signals.capture_done.connect(self._on_capture_done)
@@ -216,9 +253,10 @@ class ManualMousePanel(QGroupBox):
             self.btn_left_click, self.btn_left_dbl,
             self.btn_right_click, self.btn_mid_click,
             self.btn_record_move,
+            self.btn_insert_gap,
             self.btn_scroll_up, self.btn_scroll_down,
             self.btn_key_down, self.btn_key_up, self.btn_key_click,
-            self.key_input, self.spin_scroll,
+            self.key_input, self.spin_scroll, self.spin_gap_ms,
         ):
             w.setEnabled(enabled)
         # 组合键：输入框始终可编辑（方便预先配置），按钮跟随编辑模式
@@ -298,7 +336,14 @@ class ManualMousePanel(QGroupBox):
 
     def _emit(self, ev: Event):
         if self._edit_callback:
-            self._edit_callback(ev)
+            self._edit_callback(ev, "60")
+
+    def _emit_delay(self):
+        """插入纯间隔，不追加任何真实输入事件。"""
+        if not self._edit_callback:
+            return
+        gap = str(self.spin_gap_ms.value())
+        self._edit_callback(Event(type="delay", timestamp=0), gap)
 
     def _emit_mouse_click(self, button: MouseButton, times: int):
         btn_val = button.value
@@ -330,12 +375,17 @@ class ManualMousePanel(QGroupBox):
     def _save_combos(self):
         """将 5 组自定义组合键保存到 settings.json。"""
         prefs = settings.load()
-        prefs["combo_keys"] = [ed.text().strip() for ed in self._combo_inputs]
+        combos = []
+        for row in self._combo_inputs:
+            parts = [ed.text().strip() for ed in row if ed.text().strip()]
+            combos.append("+".join(parts))
+        prefs["combo_keys"] = combos
         settings.save(prefs)
 
     def _emit_combo(self, idx: int):
         """向编辑表格追加组合键的 key_down + key_up 事件。"""
-        combo = self._combo_inputs[idx].text().strip()
+        parts = [ed.text().strip() for ed in self._combo_inputs[idx] if ed.text().strip()]
+        combo = "+".join(parts)
         if not combo:
             return
         self._emit(Event(type=EventType.KEY_DOWN, timestamp=0, key=combo))

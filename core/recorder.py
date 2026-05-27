@@ -47,6 +47,9 @@ class Recorder:
 
         # 鼠标移动节流：记录上次采样的时间
         self._last_mouse_move_ts: float = -9999.0
+        # 热键过滤：跟踪当前按住键与需忽略的键
+        self._pressed_keys: set[str] = set()
+        self._suppressed_keys: set[str] = set()
 
     # ------------------------------------------------------------------
     # 公开接口
@@ -75,6 +78,8 @@ class Recorder:
         self._events = []
         self._start_time = time.perf_counter()
         self._last_mouse_move_ts = -9999.0
+        self._pressed_keys.clear()
+        self._suppressed_keys.clear()
         self._running = True
 
         self._kb_listener = keyboard.Listener(
@@ -160,6 +165,40 @@ class Recorder:
                     del events[i]
                 break
 
+    def _drop_latest_unpaired_key_down(self, key_name: str):
+        """删除最近一个尚未配对 key_up 的 key_down（用于热键过滤）。"""
+        balance = 0
+        for i in range(len(self._events) - 1, -1, -1):
+            e = self._events[i]
+            if e.key != key_name:
+                continue
+            if e.type == EventType.KEY_UP:
+                balance += 1
+            elif e.type == EventType.KEY_DOWN:
+                if balance == 0:
+                    del self._events[i]
+                    return
+                balance -= 1
+
+    def _normalize_for_hotkey(self, key_name: str) -> str:
+        """统一键名用于热键匹配（大小写与左右修饰键归一化）。"""
+        if len(key_name) == 1:
+            key_name = key_name.lower()
+        return {
+            "ctrl_l": "ctrl", "ctrl_r": "ctrl",
+            "alt_l": "alt", "alt_r": "alt", "alt_gr": "alt",
+            "shift_l": "shift", "shift_r": "shift",
+            "cmd_l": "cmd", "cmd_r": "cmd",
+        }.get(key_name, key_name)
+
+    def _detect_hotkey(self) -> frozenset | None:
+        """检测当前按住集合是否触发录制/回放热键。"""
+        if config.RECORD_HOTKEY.issubset(self._pressed_keys):
+            return config.RECORD_HOTKEY
+        if config.PLAY_HOTKEY.issubset(self._pressed_keys):
+            return config.PLAY_HOTKEY
+        return None
+
     # ------------------------------------------------------------------
     # 键盘回调
     # ------------------------------------------------------------------
@@ -168,10 +207,22 @@ class Recorder:
         if not self._running:
             return
         key_name, scan_code = _parse_key(key)
+        norm_key = self._normalize_for_hotkey(key_name)
+        self._pressed_keys.add(norm_key)
+
+        hotkey = self._detect_hotkey()
+        if hotkey is not None:
+            for hk in hotkey:
+                self._drop_latest_unpaired_key_down(hk)
+            self._suppressed_keys.update(hotkey)
+
+        if norm_key in self._suppressed_keys:
+            return
+
         self._append(Event(
             type=EventType.KEY_DOWN,
             timestamp=self._ts(),
-            key=key_name,
+            key=norm_key,
             scan_code=scan_code,
         ))
 
@@ -179,10 +230,17 @@ class Recorder:
         if not self._running:
             return
         key_name, scan_code = _parse_key(key)
+        norm_key = self._normalize_for_hotkey(key_name)
+        self._pressed_keys.discard(norm_key)
+
+        if norm_key in self._suppressed_keys:
+            self._suppressed_keys.discard(norm_key)
+            return
+
         self._append(Event(
             type=EventType.KEY_UP,
             timestamp=self._ts(),
-            key=key_name,
+            key=norm_key,
             scan_code=scan_code,
         ))
 
